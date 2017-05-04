@@ -1,17 +1,14 @@
 #!/usr/bin/env python
 
-import RPi.GPIO as GPIO
-from time import sleep, time
+from time import sleep
 from threading import Thread, Event
-import sys
 from pprint import pprint
 import datetime
-import serial
-from math import floor
 
 from .weather import Weather
 from .lcd import LCD
 from .light import Light
+
 
 class Beacon:
     def __init__(self):
@@ -28,12 +25,17 @@ class Beacon:
         self.blue_pin  = 15
 
 
+    def log(self, message):
+        time = datetime.datetime.today().strftime("%c")
+        print("[%s] %s" % (time, message))
+
+
     def light_cycle(self, color, blink):
         red = color[0]
         green = color[1]
         blue = color[2]
 
-        print("Starting light with %s %s %s" % (red, green, blue))
+        self.log("Starting light with %s %s %s" % (red, green, blue))
         with Light(self.red_pin, self.green_pin, self.blue_pin) as light:
             light.set(red, green, blue)
 
@@ -52,31 +54,33 @@ class Beacon:
             prev_weather = False
             while True:
                 weather_id = self.weather.get_id()
-                print("Got weather ID %s" % weather_id)
+                self.log("Got weather ID %s" % weather_id)
                 blink = False
 
                 if weather_id == 800 or weather_id == 801 or weather_id == 802:
-                    print("Weather is 80x clear")
+                    self.log("Weather is 80x clear")
                     color = (0, 20, 100)
                 elif weather_id == 803 or weather_id == 804:
-                    print("Weather is 80x cloudy")
+                    self.log("Weather is 80x cloudy")
                     color = (0, 20, 100)
                     blink = True
                 elif weather_id >= 500 and weather_id < 600:
-                    print("Weather is 50x rain")
+                    self.log("Weather is 50x rain")
                     color = (100, 0, 0)
                 elif weather_id >= 600 and weather_id < 700:
-                    print("Weather is 60x snow")
+                    self.log("Weather is 60x snow")
                     color = (100, 0, 0)
                     blink = True
 
-                self.lcd.replace(self.weather.get_text())
+                description = self.weather.get_text()
+                self.log("`%s`" % description)
+                self.lcd.replace(description)
                 self.t = Thread(target=self.light_cycle, args=(color, blink))
                 self.t.start()
                 sleep(60)
 
         except KeyboardInterrupt:
-            print("Cleaning up...")
+            self.log("Cleaning up...")
             self.running.clear()
             self.t.join()
             self.lcd.clear()
