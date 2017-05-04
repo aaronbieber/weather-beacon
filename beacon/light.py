@@ -5,6 +5,7 @@ import RPi.GPIO as GPIO
 
 class Light:
     def __init__(self, redPin, greenPin, bluePin):
+        GPIO.setwarnings(False)
         GPIO.setmode(GPIO.BOARD)
         GPIO.setup(redPin, GPIO.OUT)
         GPIO.setup(greenPin, GPIO.OUT)
