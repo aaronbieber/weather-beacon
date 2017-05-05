@@ -4,6 +4,7 @@ from time import sleep
 from threading import Thread, Event
 from pprint import pprint
 import datetime
+import Queue
 
 from .weather import Weather
 from .lcd import LCD
@@ -13,6 +14,7 @@ from .light import Light
 class Beacon:
     def __init__(self):
         # This event lets us tell the thread to end.
+        self.q = Queue.Queue()
         self.running = Event()
         self.running.set()
 
@@ -30,16 +32,31 @@ class Beacon:
         print("[%s] %s" % (time, message))
 
 
-    def light_cycle(self, color, blink):
-        red = color[0]
-        green = color[1]
-        blue = color[2]
+    def light_cycle(self):
+        red = 0
+        green = 0
+        blue = 0
+        blink = False
 
-        self.log("Starting light with %s %s %s" % (red, green, blue))
         with Light(self.red_pin, self.green_pin, self.blue_pin) as light:
-            light.set(red, green, blue)
-
             while self.running.is_set():
+                try:
+                    val = self.q.get(False)
+                    red = val[0]
+                    green = val[1]
+                    blue = val[2]
+                    blink = val[3]
+
+                    self.log("Got new light value (%s, %s, %s, %s)" % (red,
+                                                                       green,
+                                                                       blue,
+                                                                       blink))
+
+                    light.set(red, green, blue)
+                    self.q.task_done()
+                except Queue.Empty:
+                    pass
+
                 if blink:
                     sleep(1)
                     light.set(0, 0, 0)
@@ -52,6 +69,9 @@ class Beacon:
     def start(self):
         try:
             prev_weather = False
+            self.t = Thread(target=self.light_cycle)
+            self.t.start()
+
             while True:
                 weather_id = self.weather.get_id()
                 self.log("Got weather ID %s" % weather_id)
@@ -75,12 +95,13 @@ class Beacon:
                 description = self.weather.get_text()
                 self.log("`%s`" % description)
                 self.lcd.replace(description)
-                self.t = Thread(target=self.light_cycle, args=(color, blink))
-                self.t.start()
+                self.log("Queue (%s, %s, %s, %s)" % (color[0], color[1], color[2], blink))
+                self.q.put((color[0], color[1], color[2], blink))
                 sleep(60)
 
         except KeyboardInterrupt:
             self.log("Cleaning up...")
+            self.q.join()
             self.running.clear()
             self.t.join()
             self.lcd.clear()
