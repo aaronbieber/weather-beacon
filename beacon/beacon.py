@@ -32,7 +32,7 @@ class Beacon:
         print("[%s] %s" % (time, message))
 
 
-    def light_cycle(self):
+    def light_control(self):
         red = 0
         green = 0
         blue = 0
@@ -69,7 +69,7 @@ class Beacon:
     def start(self):
         try:
             prev_weather = False
-            self.t = Thread(target=self.light_cycle)
+            self.t = Thread(target=self.light_control)
             self.t.start()
 
             while True:
@@ -100,6 +100,7 @@ class Beacon:
                 sleep(60)
 
         except KeyboardInterrupt:
+            print
             self.log("Cleaning up...")
             self.q.join()
             self.running.clear()
