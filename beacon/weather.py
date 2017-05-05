@@ -41,7 +41,11 @@ class Weather:
 
         temp = "%s/%s" % (int(day["temp"]["max"]),
                           int(day["temp"]["min"]))
-        temp = (" " * (int(floor((16 - len(temp)) / 2)))) + temp
+
+        if len(desc) == 16:
+            temp = (" " * (int(floor((15 - len(temp)) / 2)))) + temp
+        else:
+            temp = " (%s)" % temp
 
         return "%s%s" % (desc, temp)
 
