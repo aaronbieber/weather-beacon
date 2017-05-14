@@ -5,7 +5,8 @@ setup(
   packages=find_packages(),
   entry_points={
     "console_scripts": [
-      "beacon = beacon.app:run"
+        "beacon = beacon.app:run",
+        "light_control = beacon.light_control:main"
     ]
   }
 )
