@@ -5,11 +5,15 @@ import RPi.GPIO as GPIO
 
 class Light:
     def __init__(self, redPin, greenPin, bluePin):
+        self.redPin = redPin
+        self.greenPin = greenPin
+        self.bluePin = bluePin
+
         GPIO.setwarnings(False)
         GPIO.setmode(GPIO.BOARD)
-        GPIO.setup(redPin, GPIO.OUT)
-        GPIO.setup(greenPin, GPIO.OUT)
-        GPIO.setup(bluePin, GPIO.OUT)
+        GPIO.setup(self.redPin, GPIO.OUT)
+        GPIO.setup(self.greenPin, GPIO.OUT)
+        GPIO.setup(self.bluePin, GPIO.OUT)
 
         self.redPWM = GPIO.PWM(redPin, 100)
         self.greenPWM = GPIO.PWM(greenPin, 100)
@@ -28,4 +32,7 @@ class Light:
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
+        GPIO.output(self.redPin, 0)
+        GPIO.output(self.greenPin, 0)
+        GPIO.output(self.bluePin, 0)
         GPIO.cleanup()
