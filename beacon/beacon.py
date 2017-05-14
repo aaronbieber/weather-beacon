@@ -3,6 +3,7 @@
 from time import sleep
 from threading import Thread, Event
 from pprint import pprint
+import signal
 import datetime
 import Queue
 
@@ -11,12 +12,17 @@ from .lcd import LCD
 from .light import Light
 
 
+class CaughtTerm(Exception):
+    pass
+
+
 class Beacon:
     def __init__(self):
         # This event lets us tell the thread to end.
         self.q = Queue.Queue()
         self.running = Event()
         self.running.set()
+        self.can_run = True
 
         self.t = None
         self.lcd = LCD()
@@ -25,6 +31,18 @@ class Beacon:
         self.red_pin   = 13
         self.green_pin = 16
         self.blue_pin  = 15
+
+        signal.signal(signal.SIGTERM, self.handle_term)
+
+
+    def handle_term(self, signal, frame):
+        self.log("Caught TERM, exiting...")
+        self.can_run = False
+
+
+    def cleanup(self):
+        with Light(self.red_pin, self.green_pin, self.blue_pin) as light:
+            light.set(0, 0, 0)
 
 
     def log(self, message):
@@ -72,6 +90,9 @@ class Beacon:
             self.t = Thread(target=self.light_control)
             self.t.start()
 
+            self.q.put((100, 50, 0, False))
+            sleep(10)
+
             while True:
                 weather_id = self.weather.get_id()
                 self.log("Got weather ID %s" % weather_id)
@@ -97,9 +118,13 @@ class Beacon:
                 #self.lcd.replace(description)
                 self.log("Queue (%s, %s, %s, %s)" % (color[0], color[1], color[2], blink))
                 self.q.put((color[0], color[1], color[2], blink))
-                sleep(60)
 
-        except KeyboardInterrupt:
+                for i in range(60):
+                    if not self.can_run:
+                        raise CaughtTerm()
+                    sleep(1)
+
+        except (KeyboardInterrupt, CaughtTerm):
             print
             self.log("Cleaning up...")
             self.q.put((0,0,0,False))
