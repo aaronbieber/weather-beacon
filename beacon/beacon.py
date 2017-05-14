@@ -93,8 +93,8 @@ class Beacon:
                     blink = True
 
                 description = self.weather.get_text()
-                self.log("`%s`" % description)
-                self.lcd.replace(description)
+                #self.log("`%s`" % description)
+                #self.lcd.replace(description)
                 self.log("Queue (%s, %s, %s, %s)" % (color[0], color[1], color[2], blink))
                 self.q.put((color[0], color[1], color[2], blink))
                 sleep(60)
@@ -102,6 +102,7 @@ class Beacon:
         except KeyboardInterrupt:
             print
             self.log("Cleaning up...")
+            self.q.put((0,0,0,False))
             self.q.join()
             self.running.clear()
             self.t.join()
