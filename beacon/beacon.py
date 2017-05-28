@@ -10,6 +10,7 @@ import Queue
 from .weather import Weather
 from .lcd import LCD
 from .light import Light
+from .log import log
 
 
 class CaughtTerm(Exception):
@@ -36,18 +37,13 @@ class Beacon:
 
 
     def handle_term(self, signal, frame):
-        self.log("Caught TERM, exiting...")
+        log("Caught TERM, exiting...")
         self.can_run = False
 
 
     def cleanup(self):
         with Light(self.red_pin, self.green_pin, self.blue_pin) as light:
             light.set(0, 0, 0)
-
-
-    def log(self, message):
-        time = datetime.datetime.today().strftime("%c")
-        print("[%s] %s" % (time, message))
 
 
     def light_control(self):
@@ -65,7 +61,7 @@ class Beacon:
                     blue = val[2]
                     blink = val[3]
 
-                    self.log("Got new light value (%s, %s, %s, %s)" % (red,
+                    log("Got new light value (%s, %s, %s, %s)" % (red,
                                                                        green,
                                                                        blue,
                                                                        blink))
@@ -95,28 +91,29 @@ class Beacon:
 
             while True:
                 weather_id = self.weather.get_id()
-                self.log("Got weather ID %s" % weather_id)
+                weather_text = self.weather.get_text()
+                log("Got weather ID %s - %s" % (weather_id, weather_text))
                 blink = False
 
                 if weather_id == 800 or weather_id == 801 or weather_id == 802:
-                    self.log("Weather is 80x clear")
+                    log("Weather is 80x clear")
                     color = (0, 20, 100)
                 elif weather_id == 803 or weather_id == 804:
-                    self.log("Weather is 80x cloudy")
+                    log("Weather is 80x cloudy")
                     color = (0, 20, 100)
                     blink = True
                 elif weather_id >= 500 and weather_id < 600:
-                    self.log("Weather is 50x rain")
+                    log("Weather is 50x rain")
                     color = (100, 0, 0)
                 elif weather_id >= 600 and weather_id < 700:
-                    self.log("Weather is 60x snow")
+                    log("Weather is 60x snow")
                     color = (100, 0, 0)
                     blink = True
 
                 description = self.weather.get_text()
-                #self.log("`%s`" % description)
+                #log("`%s`" % description)
                 #self.lcd.replace(description)
-                self.log("Queue (%s, %s, %s, %s)" % (color[0], color[1], color[2], blink))
+                log("Queue (%s, %s, %s, %s)" % (color[0], color[1], color[2], blink))
                 self.q.put((color[0], color[1], color[2], blink))
 
                 for i in range(60):
@@ -126,7 +123,7 @@ class Beacon:
 
         except (KeyboardInterrupt, CaughtTerm):
             print
-            self.log("Cleaning up...")
+            log("Cleaning up...")
             self.q.put((0,0,0,False))
             self.q.join()
             self.running.clear()
