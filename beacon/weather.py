@@ -20,8 +20,12 @@ class Weather:
                 'units': 'imperial',
                 'cnt': '1'
             }
-            r = requests.get('http://api.openweathermap.org/data/2.5/forecast/daily',
-                        params=payload)
+
+            try:
+                r = requests.get('http://api.openweathermap.org/data/2.5/forecast/daily',
+                                 params=payload)
+            except requests.exceptions.ConnectionError:
+                return False
 
             self.data = r.json()
             self.last_updated = int(time())

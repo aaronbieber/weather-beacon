@@ -86,16 +86,17 @@ class Beacon:
             self.t = Thread(target=self.light_control)
             self.t.start()
 
-            self.q.put((100, 50, 0, False))
+            self.q.put((100, 100, 0, False))
             sleep(10)
 
             while True:
                 weather_id = self.weather.get_id()
-                weather_text = self.weather.get_text()
-                log("Got weather ID %s - %s" % (weather_id, weather_text))
                 blink = False
 
-                if weather_id == 800 or weather_id == 801 or weather_id == 802:
+                if weather_id is False:
+                    log("Connection error retrieving weather!")
+                    color = (20, 100, 20)
+                elif weather_id == 800 or weather_id == 801 or weather_id == 802:
                     log("Weather is 80x clear")
                     color = (0, 20, 100)
                 elif weather_id == 803 or weather_id == 804:
@@ -111,8 +112,7 @@ class Beacon:
                     blink = True
 
                 description = self.weather.get_text()
-                #log("`%s`" % description)
-                #self.lcd.replace(description)
+                log("Got weather ID %s - %s" % (weather_id, description))
                 log("Queue (%s, %s, %s, %s)" % (color[0], color[1], color[2], blink))
                 self.q.put((color[0], color[1], color[2], blink))
 
