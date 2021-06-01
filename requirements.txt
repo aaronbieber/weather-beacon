@@ -30,7 +30,7 @@ sense-hat==2.1.0
 simple-cache==0.35
 six==1.8.0
 spidev==3.0
-urllib3==1.9.1
+urllib3==1.26.5
 virtualenv==15.1.0
 wheel==0.24.0
 wsgiref==0.1.2
