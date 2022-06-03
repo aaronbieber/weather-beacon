@@ -3,7 +3,7 @@ RPi.GPIO==0.6.3
 RTIMULib==7.2.1
 argparse==1.2.1
 arrow==0.4.2
-bottle==0.12.9
+bottle==0.12.20
 chardet==2.3.0
 colorama==0.3.2
 gpiozero==1.0.0
